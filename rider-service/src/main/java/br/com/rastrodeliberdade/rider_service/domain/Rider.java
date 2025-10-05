@@ -30,7 +30,7 @@ public class Rider {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String bikerNickname;
 
     @Column(nullable = false)
