@@ -1,0 +1,39 @@
+package br.com.rastrodeliberdade.rider_service.controller;
+
+
+import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
+import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
+import br.com.rastrodeliberdade.rider_service.service.RiderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(value = "/rider")
+public class RiderController {
+    @Autowired
+    private RiderService riderService;
+
+    @Operation(summary = "Create a new Rider",
+            description = "Endpoint to register a new Rider in the system")
+    @ApiResponse(responseCode = "201", description = "Success to create a new Rider",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = RiderSummaryDto.class)))
+    @PostMapping
+    public ResponseEntity<RiderSummaryDto> insert(@Valid @RequestBody RiderInsertDto riderInsertDto){
+        RiderSummaryDto resultNewRiderDto = riderService.insertRider(riderInsertDto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(resultNewRiderDto);
+
+    }
+}
