@@ -10,13 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RiderService {
     @Autowired
     private RiderRepository riderRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+//    @Autowired
+//    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private RiderMapper riderMapper;
@@ -32,11 +34,19 @@ public class RiderService {
 
         Rider newRider = riderMapper.toRider(riderInsertDto);
 
-        newRider.setPassword(passwordEncoder.encode(riderInsertDto.password()));
+//        newRider.setPassword(passwordEncoder.encode(riderInsertDto.password()));
 
         Rider savedRider = riderRepository.save(newRider);
 
         return riderMapper.toSummaryDto(savedRider);
+    }
+
+    public List<RiderSummaryDto> findAllRider(){
+        List<Rider> riders = riderRepository.findAll();
+
+        return riders.stream()
+                .map(riderMapper::toSummaryDto)
+                .toList();
     }
 
 

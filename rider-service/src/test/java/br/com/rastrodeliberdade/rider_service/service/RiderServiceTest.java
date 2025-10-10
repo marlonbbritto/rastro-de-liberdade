@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -135,6 +136,45 @@ public class RiderServiceTest {
         assertThatThrownBy(()->riderService.insertRider(riderInsertDto))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("já existe um usuário cadastrado com o nickname: "+riderInsertDto.bikerNickname());
+
+    }
+
+    @Test
+    @DisplayName("Should return an list of riders when call findAll and everything is ok")
+    void findAll_ReturnListOfRider_WhenEverythingIsOK(){
+        Rider fakeRider1 = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("João Silva")
+                .email("joao.silva@test.com")
+                .bikerNickname("joao.silva")
+                .password(passwordEncoder.encode("teste123@"))
+                .city("Maringá")
+                .state("Paraná")
+                .build();
+
+        Rider fakeRider2 = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("Paulo Carvalho")
+                .email("paulo.carvalho@test.com")
+                .bikerNickname("paulo.carvalho")
+                .password(passwordEncoder.encode("teste123@"))
+                .city("Cascavel")
+                .state("Paraná")
+                .build();
+
+        List<Rider> existingRiderList = List.of(fakeRider1,fakeRider2);
+
+        List<RiderSummaryDto> expectedRiderList = existingRiderList.stream()
+                        .map(riderMapper::toSummaryDto)
+                        .toList();
+
+        when(riderRepository.findAll()).thenReturn(existingRiderList);
+
+        List<RiderSummaryDto> resultRiderList = riderService.findAllRider();
+
+        assertThat(resultRiderList).isEqualTo(expectedRiderList);
+
+        verify(riderRepository,times(1)).findAll();
 
     }
 }
