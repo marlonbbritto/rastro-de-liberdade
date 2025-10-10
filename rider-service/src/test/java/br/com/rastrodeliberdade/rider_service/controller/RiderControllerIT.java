@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -134,6 +135,19 @@ public class RiderControllerIT {
                 .andExpect(jsonPath("$.error").value("Erro na regra de negócio"))
                 .andExpect(jsonPath("$.message").value("já existe um usuário cadastrado com o nickname: "+riderInsertDto.bikerNickname()));
 
+    }
+
+    @Test
+    @DisplayName("Should return 200 Ok and an list of riders when call findAll and everything is ok")
+    void findAll_ReturnListOfRider_WhenEverythingIsOK() throws Exception{
+        mockMvc.perform(get("/rider")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].bikerNickname").value(existingRider.getBikerNickname()))
+                .andExpect(jsonPath("$.[0].email").value(existingRider.getEmail()))
+                .andExpect(jsonPath("$.[0].city").value(existingRider.getCity()))
+                .andExpect(jsonPath("$.[0].state").value(existingRider.getState()));
     }
 
 
