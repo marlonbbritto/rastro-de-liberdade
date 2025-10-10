@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.UUID;
 
 import br.com.rastrodeliberdade.rider_service.config.SecurityConfig;
@@ -29,7 +30,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 
 @WebMvcTest(RiderController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class})
 public class RiderControllerTest {
 
     @Autowired
@@ -128,5 +129,54 @@ public class RiderControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Erro na regra de negócio"))
                 .andExpect(jsonPath("$.message").value("já existe um usuário cadastrado com o nickname: "+riderInsertDto.bikerNickname()));
+    }
+
+    @Test
+    @DisplayName("Should return 200 Ok and an list of riders when call findAll and everything is ok")
+    void findAll_ReturnListOfRider_WhenEverythingIsOK() throws Exception{
+        Rider fakeRider1 = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("João Silva")
+                .email("joao.silva@test.com")
+                .bikerNickname("joao.silva")
+                .password(passwordEncoder.encode("teste123@"))
+                .city("Maringá")
+                .state("Paraná")
+                .build();
+
+        Rider fakeRider2 = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("Paulo Carvalho")
+                .email("paulo.carvalho@test.com")
+                .bikerNickname("paulo.carvalho")
+                .password(passwordEncoder.encode("teste123@"))
+                .city("Cascavel")
+                .state("Paraná")
+                .build();
+
+        List<Rider> existingRiderList = List.of(fakeRider1,fakeRider2);
+
+        RiderSummaryDto fakeDto1 = new RiderSummaryDto("joao.silva", "joao.silva@test.com", "Maringá", "Paraná");
+        RiderSummaryDto fakeDto2 = new RiderSummaryDto("paulo.carvalho", "paulo.carvalho@test.com", "Cascavel", "Paraná");
+
+        List<RiderSummaryDto> expectedRiderList = List.of(fakeDto1, fakeDto2);
+
+
+        when(riderMapper.toSummaryDto(fakeRider1)).thenReturn(fakeDto1);
+        when(riderMapper.toSummaryDto(fakeRider2)).thenReturn(fakeDto2);
+
+        given(riderService.findAllRider()).willReturn(expectedRiderList);
+
+        mockMvc.perform(get("/rider")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].bikerNickname").value(expectedRiderList.get(0).bikerNickname()))
+                .andExpect(jsonPath("$.[0].email").value(expectedRiderList.get(0).email()))
+                .andExpect(jsonPath("$.[0].city").value(expectedRiderList.get(0).city()))
+                .andExpect(jsonPath("$.[0].state").value(expectedRiderList.get(0).state()));
+
+        verify(riderService,times(1)).findAllRider();
+
     }
 }

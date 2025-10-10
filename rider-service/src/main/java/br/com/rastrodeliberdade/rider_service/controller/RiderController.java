@@ -5,6 +5,7 @@ import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.service.RiderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,10 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/rider")
@@ -35,5 +35,17 @@ public class RiderController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(resultNewRiderDto);
 
+    }
+
+    @Operation(summary = "Find All Riders registered",
+            description = "Endpoint to find all Riders registered in the system")
+    @ApiResponse(responseCode = "200", description = "Success to find all Riders",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = RiderSummaryDto.class))))
+    @GetMapping
+    public  ResponseEntity<List<RiderSummaryDto>> findAll(){
+        List<RiderSummaryDto> riderSummaryDtoList = riderService.findAllRider();
+
+        return ResponseEntity.status(HttpStatus.OK).body(riderSummaryDtoList);
     }
 }
