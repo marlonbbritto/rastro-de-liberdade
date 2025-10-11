@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -150,5 +152,34 @@ public class RiderControllerIT {
                 .andExpect(jsonPath("$.[0].state").value(existingRider.getState()));
     }
 
+    @Test
+    @DisplayName("Should Return 200 Ok and RiderSummaryDto when call findById and everything is ok")
+    void findById_Return200OkAndRiderSummary_WhenEverythingIsOK() throws Exception{
+        UUID idToFind = existingRider.getId();
+
+        mockMvc.perform(get("/rider/{id}",idToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bikerNickname").value(existingRider.getBikerNickname()))
+                .andExpect(jsonPath("$.email").value(existingRider.getEmail()))
+                .andExpect(jsonPath("$.city").value(existingRider.getCity()))
+                .andExpect(jsonPath("$.state").value(existingRider.getState()));
+
+    }
+
+    @Test
+    @DisplayName("Should Return 404 and Resource Not Found Exception when call findById with non existing id")
+    void finById_ReturnResourceNotFoundException_WhenIdNonExisting() throws Exception{
+        UUID idToFind = UUID.randomUUID();
+
+        mockMvc.perform(get("/rider/{id}",idToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value("Rider com ID "+idToFind+" não encontrado."));
+    }
 
 }
