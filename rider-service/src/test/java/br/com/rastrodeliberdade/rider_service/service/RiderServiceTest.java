@@ -4,8 +4,10 @@ import br.com.rastrodeliberdade.rider_service.domain.Rider;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.exception.BusinessException;
+import br.com.rastrodeliberdade.rider_service.exception.ResourceNotFoundException;
 import br.com.rastrodeliberdade.rider_service.mapper.RiderMapper;
 import br.com.rastrodeliberdade.rider_service.repository.RiderRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,23 @@ public class RiderServiceTest {
 
     @MockitoBean
     RiderRepository riderRepository;
+
+    private Rider existingRider;
+
+    @BeforeEach
+    void setup(){
+        Rider savedRider = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("Marlon Britto")
+                .email("marlonb@test.com")
+                .bikerNickname("marlon.britto")
+                .password(passwordEncoder.encode("12345mudar!"))
+                .city("Maringá")
+                .state("Paraná")
+                .build();
+
+        this.existingRider = savedRider;
+    }
 
     @Test
     @DisplayName("Should return new inserted Rider when call insert and everything is ok")
@@ -175,6 +194,35 @@ public class RiderServiceTest {
         assertThat(resultRiderList).isEqualTo(expectedRiderList);
 
         verify(riderRepository,times(1)).findAll();
+
+    }
+
+    @Test
+    @DisplayName("Should Return RiderSummaryDto when call findById and everything is ok")
+    void findById_ReturnRiderSummary_WhenEverythingIsOK() throws Exception{
+        RiderSummaryDto expectedResultRiderSummary = riderMapper.toSummaryDto(existingRider);
+
+        UUID idToFind = existingRider.getId();
+
+        when(riderRepository.findById(idToFind)).thenReturn(Optional.ofNullable(existingRider));
+
+        RiderSummaryDto resultRiderSummary = riderService.findById(idToFind);
+
+        assertThat(resultRiderSummary).isEqualTo(expectedResultRiderSummary);
+
+        verify(riderRepository,times(1)).findById(idToFind);
+    }
+
+    @Test
+    @DisplayName("Should Return Resource Not Found Exception when call findById with non existing id")
+    void finById_ReturnResourceNotFoundException_WhenIdNonExisting() throws Exception{
+        UUID idToFind = UUID.randomUUID();
+
+        when(riderRepository.findById(idToFind)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(()->riderService.findById(idToFind))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Rider com ID "+idToFind+" não encontrado.");
 
     }
 }
