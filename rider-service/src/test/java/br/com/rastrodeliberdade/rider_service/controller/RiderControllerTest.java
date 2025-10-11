@@ -4,9 +4,11 @@ import br.com.rastrodeliberdade.rider_service.domain.Rider;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.exception.BusinessException;
+import br.com.rastrodeliberdade.rider_service.exception.ResourceNotFoundException;
 import br.com.rastrodeliberdade.rider_service.mapper.RiderMapper;
 import br.com.rastrodeliberdade.rider_service.service.RiderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,22 @@ public class RiderControllerTest {
 
     @MockitoBean
     private RiderService riderService;
+
+    private Rider existingRider;
+
+    @BeforeEach
+    void setup(){
+
+        this.existingRider = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("Marlon Britto")
+                .email("marlonb@test.com")
+                .bikerNickname("marlon.britto")
+                .password(passwordEncoder.encode("12345mudar!"))
+                .city("Maringá")
+                .state("Paraná")
+                .build();
+    }
 
     @Test
     @DisplayName("Should return 201 Created and new inserted Rider when call insert and everything is ok")
@@ -179,4 +197,49 @@ public class RiderControllerTest {
         verify(riderService,times(1)).findAllRider();
 
     }
+
+    @Test
+    @DisplayName("Should Return 200 Ok and RiderSummaryDto when call findById and everything is ok")
+    void findById_Return200OkAndRiderSummary_WhenEverythingIsOK() throws Exception{
+        RiderSummaryDto expectedResultRiderSummary = new RiderSummaryDto(
+                existingRider.getBikerNickname(),
+                existingRider.getEmail(),
+                existingRider.getCity(),
+                existingRider.getState());
+
+        UUID idToFind = existingRider.getId();
+
+        given(riderService.findById(idToFind)).willReturn(expectedResultRiderSummary);
+
+        mockMvc.perform(get("/rider/{id}",idToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bikerNickname").value(expectedResultRiderSummary.bikerNickname()))
+                .andExpect(jsonPath("$.email").value(expectedResultRiderSummary.email()))
+                .andExpect(jsonPath("$.city").value(expectedResultRiderSummary.city()))
+                .andExpect(jsonPath("$.state").value(expectedResultRiderSummary.state()));
+
+        verify(riderService,times(1)).findById(idToFind);
+
+    }
+
+    @Test
+    @DisplayName("Should Return 404 and Resource Not Found Exception when call findById with non existing id")
+    void finById_ReturnResourceNotFoundException_WhenIdNonExisting() throws Exception{
+        UUID idToFind = UUID.randomUUID();
+
+        given(riderService.findById(idToFind)).willThrow(new ResourceNotFoundException("Rider", idToFind));
+
+        mockMvc.perform(get("/rider/{id}",idToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value("Rider com ID "+idToFind+" não encontrado."));
+
+    }
+
+
 }

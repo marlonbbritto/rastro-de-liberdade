@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/rider")
@@ -47,5 +48,17 @@ public class RiderController {
         List<RiderSummaryDto> riderSummaryDtoList = riderService.findAllRider();
 
         return ResponseEntity.status(HttpStatus.OK).body(riderSummaryDtoList);
+    }
+
+    @Operation(summary = "Find Rider by Id",
+            description = "Endpoint find Rider by Id in the system")
+    @ApiResponse(responseCode = "200", description = "Success to find Rider",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = RiderSummaryDto.class)))
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<RiderSummaryDto> findById(@PathVariable UUID id){
+        RiderSummaryDto resultRider = riderService.findById(id);
+
+        return ResponseEntity.status(HttpStatus.OK).body(resultRider);
     }
 }
