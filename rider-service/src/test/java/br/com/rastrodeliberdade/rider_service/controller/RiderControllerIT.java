@@ -75,6 +75,7 @@ public class RiderControllerIT {
         );
 
         RiderSummaryDto expectedRiderSummaryDto = new RiderSummaryDto(
+                UUID.randomUUID(),
                 riderInsertDto.bikerNickname(),
                 riderInsertDto.email(),
                 riderInsertDto.city(),
@@ -86,6 +87,7 @@ public class RiderControllerIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(riderInsertDto)))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.bikerNickname").value(riderInsertDto.bikerNickname()))
                 .andExpect(jsonPath("$.email").value(riderInsertDto.email()))
                 .andExpect(jsonPath("$.city").value(riderInsertDto.city()))
@@ -146,6 +148,7 @@ public class RiderControllerIT {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].id").value(existingRider.getId().toString()))
                 .andExpect(jsonPath("$.[0].bikerNickname").value(existingRider.getBikerNickname()))
                 .andExpect(jsonPath("$.[0].email").value(existingRider.getEmail()))
                 .andExpect(jsonPath("$.[0].city").value(existingRider.getCity()))
@@ -161,6 +164,7 @@ public class RiderControllerIT {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingRider.getId().toString()))
                 .andExpect(jsonPath("$.bikerNickname").value(existingRider.getBikerNickname()))
                 .andExpect(jsonPath("$.email").value(existingRider.getEmail()))
                 .andExpect(jsonPath("$.city").value(existingRider.getCity()))

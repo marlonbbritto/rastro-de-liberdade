@@ -79,6 +79,7 @@ public class RiderControllerTest {
         );
 
         RiderSummaryDto expectedRiderSummaryDto = new RiderSummaryDto(
+                UUID.randomUUID(),
                 riderInsertDto.bikerNickname(),
                 riderInsertDto.email(),
                 riderInsertDto.city(),
@@ -92,6 +93,7 @@ public class RiderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(riderInsertDto)))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.bikerNickname").value(riderInsertDto.bikerNickname()))
                 .andExpect(jsonPath("$.email").value(riderInsertDto.email()))
                 .andExpect(jsonPath("$.city").value(riderInsertDto.city()))
@@ -174,8 +176,8 @@ public class RiderControllerTest {
 
         List<Rider> existingRiderList = List.of(fakeRider1,fakeRider2);
 
-        RiderSummaryDto fakeDto1 = new RiderSummaryDto("joao.silva", "joao.silva@test.com", "Maringá", "Paraná");
-        RiderSummaryDto fakeDto2 = new RiderSummaryDto("paulo.carvalho", "paulo.carvalho@test.com", "Cascavel", "Paraná");
+        RiderSummaryDto fakeDto1 = new RiderSummaryDto(fakeRider1.getId(),"joao.silva", "joao.silva@test.com", "Maringá", "Paraná");
+        RiderSummaryDto fakeDto2 = new RiderSummaryDto(fakeRider2.getId(),"paulo.carvalho", "paulo.carvalho@test.com", "Cascavel", "Paraná");
 
         List<RiderSummaryDto> expectedRiderList = List.of(fakeDto1, fakeDto2);
 
@@ -189,6 +191,7 @@ public class RiderControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].id").value(expectedRiderList.get(0).id().toString()))
                 .andExpect(jsonPath("$.[0].bikerNickname").value(expectedRiderList.get(0).bikerNickname()))
                 .andExpect(jsonPath("$.[0].email").value(expectedRiderList.get(0).email()))
                 .andExpect(jsonPath("$.[0].city").value(expectedRiderList.get(0).city()))
@@ -202,6 +205,7 @@ public class RiderControllerTest {
     @DisplayName("Should Return 200 Ok and RiderSummaryDto when call findById and everything is ok")
     void findById_Return200OkAndRiderSummary_WhenEverythingIsOK() throws Exception{
         RiderSummaryDto expectedResultRiderSummary = new RiderSummaryDto(
+                existingRider.getId(),
                 existingRider.getBikerNickname(),
                 existingRider.getEmail(),
                 existingRider.getCity(),
@@ -215,6 +219,7 @@ public class RiderControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(expectedResultRiderSummary.id().toString()))
                 .andExpect(jsonPath("$.bikerNickname").value(expectedResultRiderSummary.bikerNickname()))
                 .andExpect(jsonPath("$.email").value(expectedResultRiderSummary.email()))
                 .andExpect(jsonPath("$.city").value(expectedResultRiderSummary.city()))
