@@ -19,8 +19,8 @@ public class RiderService {
     @Autowired
     private RiderRepository riderRepository;
 
-//    @Autowired
-//    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private RiderMapper riderMapper;
@@ -36,7 +36,7 @@ public class RiderService {
 
         Rider newRider = riderMapper.toRider(riderInsertDto);
 
-//        newRider.setPassword(passwordEncoder.encode(riderInsertDto.password()));
+        newRider.setPassword(passwordEncoder.encode(riderInsertDto.password()));
 
         Rider savedRider = riderRepository.save(newRider);
 
