@@ -86,6 +86,7 @@ public class RiderServiceTest {
 
         assertThat(resultInsertRider).isNotNull();
 
+        assertThat(resultInsertRider.id()).isEqualTo(expectedRiderSummaryDto.id());
         assertThat(resultInsertRider.bikerNickname()).isEqualTo(expectedRiderSummaryDto.bikerNickname());
         assertThat(resultInsertRider.email()).isEqualTo(expectedRiderSummaryDto.email());
         assertThat(resultInsertRider.city()).isEqualTo(expectedRiderSummaryDto.city());
