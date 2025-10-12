@@ -61,4 +61,16 @@ public class RiderController {
 
         return ResponseEntity.status(HttpStatus.OK).body(resultRider);
     }
+
+    @Operation(summary = "Find Rider by email",
+            description = "Endpoint find Rider by email in the system")
+    @ApiResponse(responseCode = "200", description = "Success to find Rider",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = RiderSummaryDto.class)))
+    @GetMapping(value = "/search/by-email")
+    public ResponseEntity<RiderSummaryDto> findByEmail(@RequestParam String email){
+        RiderSummaryDto resultRider = riderService.findByEmail(email);
+
+        return ResponseEntity.status(HttpStatus.OK).body(resultRider);
+    }
 }
