@@ -246,5 +246,50 @@ public class RiderControllerTest {
 
     }
 
+    @Test
+    @DisplayName("Should Return 200 Ok and RiderSummaryDto when call findByEmail and everything is ok")
+    void findByEmail_Return200OkAndRiderSummary_WhenEverythingIsOK() throws Exception{
+        RiderSummaryDto expectedResultRiderSummary = new RiderSummaryDto(
+                existingRider.getId(),
+                existingRider.getBikerNickname(),
+                existingRider.getEmail(),
+                existingRider.getCity(),
+                existingRider.getState());
+
+        String emailToFind = existingRider.getEmail();
+
+        given(riderService.findByEmail(emailToFind)).willReturn(expectedResultRiderSummary);
+
+        mockMvc.perform(get("/rider/search/by-email?email=marlonb@test.com")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(expectedResultRiderSummary.id().toString()))
+                .andExpect(jsonPath("$.bikerNickname").value(expectedResultRiderSummary.bikerNickname()))
+                .andExpect(jsonPath("$.email").value(expectedResultRiderSummary.email()))
+                .andExpect(jsonPath("$.city").value(expectedResultRiderSummary.city()))
+                .andExpect(jsonPath("$.state").value(expectedResultRiderSummary.state()));
+
+        verify(riderService,times(1)).findByEmail(emailToFind);
+
+    }
+
+    @Test
+    @DisplayName("Should Return 404 and Resource Not Found Exception when call findByEmail with non existing email")
+    void finByEmail_ReturnResourceNotFoundException_WhenEmailNonExisting() throws Exception{
+        String emailToFind = "testeerro@erro.com";
+
+        given(riderService.findByEmail(emailToFind)).willThrow(new ResourceNotFoundException("Rider", "e-mail", emailToFind));
+
+        mockMvc.perform(get("/rider/search/by-email?email=testeerro@erro.com")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value("Rider não encontrado com e-mail: '"+emailToFind+"'"));
+
+    }
+
 
 }

@@ -58,5 +58,12 @@ public class RiderService {
         return riderMapper.toSummaryDto(rider);
     }
 
+    public  RiderSummaryDto findByEmail(String email){
+        Rider rider = riderRepository.findByEmail(email)
+                .orElseThrow(()->new ResourceNotFoundException("Rider", "e-mail", email));
+
+        return riderMapper.toSummaryDto(rider);
+    }
+
 
 }

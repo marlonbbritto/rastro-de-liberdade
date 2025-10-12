@@ -226,4 +226,34 @@ public class RiderServiceTest {
                 .hasMessageContaining("Rider com ID "+idToFind+" não encontrado.");
 
     }
+
+    @Test
+    @DisplayName("Should Return RiderSummaryDto when call findByEmail and everything is ok")
+    void findByEmail_ReturnRiderSummary_WhenEverythingIsOK() throws Exception{
+        RiderSummaryDto expectedResultRiderSummary = riderMapper.toSummaryDto(existingRider);
+
+        String emailToFind = existingRider.getEmail();
+
+        when(riderRepository.findByEmail(emailToFind)).thenReturn(Optional.ofNullable(existingRider));
+
+        RiderSummaryDto resultRiderSummary = riderService.findByEmail(emailToFind);
+
+        assertThat(resultRiderSummary).isEqualTo(expectedResultRiderSummary);
+
+        verify(riderRepository,times(1)).findByEmail(emailToFind);
+
+    }
+
+    @Test
+    @DisplayName("Should Return Resource Not Found Exception when call findByEmail with non existing email")
+    void finByEmail_ReturnResourceNotFoundException_WhenEmailNonExisting() throws Exception{
+        String emailToFind = "teste";
+
+        when(riderRepository.findByEmail(emailToFind)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(()->riderService.findByEmail(emailToFind))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Rider não encontrado com e-mail: '"+emailToFind+"'");
+
+    }
 }
