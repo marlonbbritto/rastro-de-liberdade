@@ -3,6 +3,7 @@ package br.com.rastrodeliberdade.rider_service.controller;
 import br.com.rastrodeliberdade.rider_service.domain.Rider;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
+import br.com.rastrodeliberdade.rider_service.exception.ResourceNotFoundException;
 import br.com.rastrodeliberdade.rider_service.repository.RiderRepository;
 import br.com.rastrodeliberdade.rider_service.service.RiderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -184,6 +188,43 @@ public class RiderControllerIT {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
                 .andExpect(jsonPath("$.message").value("Rider com ID "+idToFind+" não encontrado."));
+    }
+
+    @Test
+    @DisplayName("Should Return 200 Ok and RiderSummaryDto when call findByEmail and everything is ok")
+    void findByEmail_Return200OkAndRiderSummary_WhenEverythingIsOK() throws Exception{
+        RiderSummaryDto expectedResultRiderSummary = new RiderSummaryDto(
+                existingRider.getId(),
+                existingRider.getBikerNickname(),
+                existingRider.getEmail(),
+                existingRider.getCity(),
+                existingRider.getState());
+
+        mockMvc.perform(get("/rider/search/by-email?email=carlos.antonio@test.com")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(expectedResultRiderSummary.id().toString()))
+                .andExpect(jsonPath("$.bikerNickname").value(expectedResultRiderSummary.bikerNickname()))
+                .andExpect(jsonPath("$.email").value(expectedResultRiderSummary.email()))
+                .andExpect(jsonPath("$.city").value(expectedResultRiderSummary.city()))
+                .andExpect(jsonPath("$.state").value(expectedResultRiderSummary.state()));
+
+    }
+
+    @Test
+    @DisplayName("Should Return 404 and Resource Not Found Exception when call findByEmail with non existing email")
+    void finByEmail_ReturnResourceNotFoundException_WhenEmailNonExisting() throws Exception{
+        String emailToFind = "testeerro@erro.com";
+
+        mockMvc.perform(get("/rider/search/by-email?email=testeerro@erro.com")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value("Rider não encontrado com e-mail: '"+emailToFind+"'"));
+
     }
 
 }
