@@ -65,5 +65,13 @@ public class RiderService {
         return riderMapper.toSummaryDto(rider);
     }
 
+    public List<RiderSummaryDto> findByState(String state){
+        List<Rider> riders = riderRepository.findByState(state);
+
+        return riders.stream()
+                .map(riderMapper::toSummaryDto)
+                .toList();
+    }
+
 
 }
