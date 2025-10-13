@@ -73,4 +73,17 @@ public class RiderController {
 
         return ResponseEntity.status(HttpStatus.OK).body(resultRider);
     }
+
+    @Operation(summary = "Find Riders by state",
+            description = "Endpoint find Riders by state in the system")
+    @ApiResponse(responseCode = "200", description = "Success to find Riders by states",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = RiderSummaryDto.class))))
+    @GetMapping(value = "/search/by-state")
+    public ResponseEntity<List<RiderSummaryDto>> findByState(@RequestParam String state){
+        List<RiderSummaryDto> riderSummaryDtoList = riderService.findByState(state);
+
+        return ResponseEntity.status(HttpStatus.OK).body(riderSummaryDtoList);
+
+    }
 }

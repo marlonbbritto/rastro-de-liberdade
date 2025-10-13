@@ -291,5 +291,57 @@ public class RiderControllerTest {
 
     }
 
+    @Test
+    @DisplayName("Should return 200 Ok and a list of riders when call findByState and everything is ok")
+    void findByState_Return200OkAndListOfRiders_WhenEverythingIsOK() throws Exception {
+        String stateToFind = "Paraná";
+        RiderSummaryDto fakeDto1 = new RiderSummaryDto(
+                UUID.randomUUID(),
+                "joao.silva",
+                "joao.silva@test.com",
+                "Maringá",
+                stateToFind);
+
+        RiderSummaryDto fakeDto2 = new RiderSummaryDto(
+                UUID.randomUUID(),
+                "maria.santos",
+                "maria.santos@test.com",
+                "Curitiba",
+                stateToFind);
+
+        List<RiderSummaryDto> expectedRiderList = List.of(fakeDto1, fakeDto2);
+
+        given(riderService.findByState(stateToFind)).willReturn(expectedRiderList);
+
+        mockMvc.perform(get("/rider/search/by-state")
+                        .param("state", stateToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$.[0].bikerNickname").value("joao.silva"))
+                .andExpect(jsonPath("$.[1].bikerNickname").value("maria.santos"));
+
+        verify(riderService, times(1)).findByState(stateToFind);
+    }
+
+    @Test
+    @DisplayName("Should return 200 Ok and an empty list when call findByState with a non-existing state")
+    void findByState_Return200OkAndEmptyList_WhenStateNonExisting() throws Exception {
+        String stateToFind = "Estado Fantasma";
+        List<RiderSummaryDto> expectedRiderList = List.of();
+
+        given(riderService.findByState(stateToFind)).willReturn(expectedRiderList);
+
+        mockMvc.perform(get("/rider/search/by-state")
+                        .param("state", stateToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(0));
+
+        verify(riderService, times(1)).findByState(stateToFind);
+    }
+
 
 }

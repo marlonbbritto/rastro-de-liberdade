@@ -256,4 +256,56 @@ public class RiderServiceTest {
                 .hasMessageContaining("Rider não encontrado com e-mail: '"+emailToFind+"'");
 
     }
+
+    @Test
+    @DisplayName("Should return a list of RiderSummaryDto when call findByState and everything is ok")
+    void findByState_ReturnListOfRider_WhenEverythingIsOK() {
+        String stateToFind = "Paraná";
+
+        Rider fakeRider1 = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("João Silva")
+                .email("joao.silva@test.com")
+                .bikerNickname("joao.silva")
+                .state(stateToFind)
+                .build();
+
+        Rider fakeRider2 = Rider.builder()
+                .id(UUID.randomUUID())
+                .fullName("Maria Santos")
+                .email("maria.santos@test.com")
+                .bikerNickname("maria.santos")
+                .state(stateToFind)
+                .build();
+
+        List<Rider> existingRiderList = List.of(fakeRider1, fakeRider2);
+        List<RiderSummaryDto> expectedRiderList = existingRiderList.stream()
+                .map(riderMapper::toSummaryDto)
+                .toList();
+
+        when(riderRepository.findByState(stateToFind)).thenReturn(existingRiderList);
+
+        List<RiderSummaryDto> resultRiderList = riderService.findByState(stateToFind);
+
+        assertThat(resultRiderList).isNotNull();
+        assertThat(resultRiderList.size()).isEqualTo(2);
+        assertThat(resultRiderList).isEqualTo(expectedRiderList);
+
+        verify(riderRepository, times(1)).findByState(stateToFind);
+    }
+
+    @Test
+    @DisplayName("Should return an empty list when call findByState with non-existing state")
+    void findByState_ReturnEmptyList_WhenStateNonExisting() {
+        String stateToFind = "Estado Inexistente";
+
+        when(riderRepository.findByState(stateToFind)).thenReturn(List.of());
+
+        List<RiderSummaryDto> resultRiderList = riderService.findByState(stateToFind);
+
+        assertThat(resultRiderList).isNotNull();
+        assertThat(resultRiderList.isEmpty()).isTrue();
+
+        verify(riderRepository, times(1)).findByState(stateToFind);
+    }
 }
