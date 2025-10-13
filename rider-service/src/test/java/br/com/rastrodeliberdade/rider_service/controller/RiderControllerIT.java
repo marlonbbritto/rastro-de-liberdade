@@ -227,4 +227,32 @@ public class RiderControllerIT {
 
     }
 
+    @Test
+    @DisplayName("Should return 200 Ok and a list of riders when call findByState and everything is ok")
+    void findByState_Return200OkAndListOfRiders_WhenEverythingIsOk() throws Exception {
+        String stateToFind = "São Paulo";
+
+        mockMvc.perform(get("/rider/search/by-state")
+                        .param("state", stateToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(1))
+                .andExpect(jsonPath("$.[0].id").value(existingRider.getId().toString()))
+                .andExpect(jsonPath("$.[0].state").value(stateToFind));
+    }
+
+    @Test
+    @DisplayName("Should return 200 Ok and an empty list when call findByState with a non-existing state")
+    void findByState_Return200OkAndEmptyList_WhenStateNonExisting() throws Exception {
+        String stateToFind = "Estado Inexistente";
+
+        mockMvc.perform(get("/rider/search/by-state")
+                        .param("state", stateToFind)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(0));
+    }
+
 }
