@@ -308,4 +308,112 @@ public class RiderServiceTest {
 
         verify(riderRepository, times(1)).findByState(stateToFind);
     }
+
+    @Test
+    @DisplayName("Should return updated Rider when call updateRider and everything is ok")
+    void updateRider_ReturnUpdatedRider_WhenEverythingIsOK() {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Marlon Britto Updated",
+                "marlonb.updated@test.com",
+                "marlon.britto.updated",
+                "newpassword123",
+                "Curitiba",
+                "Paraná"
+        );
+
+        when(riderRepository.findById(idToUpdate)).thenReturn(Optional.of(existingRider));
+
+        when(riderRepository.findByEmail(riderUpdateDto.email())).thenReturn(Optional.empty());
+        when(riderRepository.findByBikerNickname(riderUpdateDto.bikerNickname())).thenReturn(Optional.empty());
+
+        when(riderRepository.save(any(Rider.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RiderSummaryDto resultRiderSummary = riderService.updateRider(riderUpdateDto, idToUpdate);
+
+        assertThat(resultRiderSummary).isNotNull();
+        assertThat(resultRiderSummary.id()).isEqualTo(idToUpdate);
+        assertThat(resultRiderSummary.bikerNickname()).isEqualTo(riderUpdateDto.bikerNickname());
+        assertThat(resultRiderSummary.email()).isEqualTo(riderUpdateDto.email());
+        assertThat(resultRiderSummary.city()).isEqualTo(riderUpdateDto.city());
+        assertThat(resultRiderSummary.state()).isEqualTo(riderUpdateDto.state());
+
+        verify(riderRepository, times(1)).findById(idToUpdate);
+        verify(riderRepository, times(1)).findByEmail(riderUpdateDto.email());
+        verify(riderRepository, times(1)).findByBikerNickname(riderUpdateDto.bikerNickname());
+        verify(riderRepository, times(1)).save(any(Rider.class));
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when call updateRider with non-existing id")
+    void updateRider_ThrowResourceNotFoundException_WhenIdNonExisting() {
+        UUID idToUpdate = UUID.randomUUID();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Any Name",
+                "any@email.com",
+
+                "any.nick",
+                "password",
+                "Any City",
+                "Any State");
+
+        when(riderRepository.findById(idToUpdate)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> riderService.updateRider(riderUpdateDto, idToUpdate))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Rider com ID " + idToUpdate + " não encontrado.");
+    }
+
+    @Test
+    @DisplayName("Should throw BusinessException when call updateRider with email that belongs to another rider")
+    void updateRider_ThrowBusinessException_WhenEmailBelongsToAnotherRider() {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Marlon B.",
+                "another.user@test.com",
+                "marlon.britto.updated",
+                "pass",
+                "City",
+                "State");
+
+        Rider anotherRiderWithEmail = Rider.builder()
+                .id(UUID.randomUUID())
+                .email(riderUpdateDto.email())
+                .build();
+
+        when(riderRepository.findById(idToUpdate)).thenReturn(Optional.of(existingRider));
+        when(riderRepository.findByEmail(riderUpdateDto.email())).thenReturn(Optional.of(anotherRiderWithEmail));
+
+        assertThatThrownBy(() -> riderService.updateRider(riderUpdateDto, idToUpdate))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Já existe um usuario diferente cadastrado com o e-mail: " + riderUpdateDto.email());
+    }
+
+    @Test
+    @DisplayName("Should throw BusinessException when call updateRider with nickname that belongs to another rider")
+    void updateRider_ThrowBusinessException_WhenNicknameBelongsToAnotherRider() {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Marlon B.",
+                "marlon.updated@test.com",
+                "another.user.nick",
+                "pass",
+                "City",
+                "State");
+
+        Rider anotherRiderWithNickname = Rider.builder()
+                .id(UUID.randomUUID())
+                .bikerNickname(riderUpdateDto.bikerNickname())
+                .build();
+
+        when(riderRepository.findById(idToUpdate)).thenReturn(Optional.of(existingRider));
+        when(riderRepository.findByEmail(riderUpdateDto.email())).thenReturn(Optional.empty());
+        when(riderRepository.findByBikerNickname(riderUpdateDto.bikerNickname())).thenReturn(Optional.of(anotherRiderWithNickname));
+
+        assertThatThrownBy(() -> riderService.updateRider(riderUpdateDto, idToUpdate))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Já existe um usuario diferente cadastrado com o nickname: " + riderUpdateDto.bikerNickname());
+    }
+
+
 }
