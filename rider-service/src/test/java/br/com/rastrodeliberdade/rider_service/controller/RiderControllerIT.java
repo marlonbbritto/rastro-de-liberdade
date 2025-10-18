@@ -384,4 +384,31 @@ public class RiderControllerIT {
                 .andExpect(jsonPath("$.message").value("Rider com ID " + nonExistingId + " não encontrado."));
     }
 
+    @Test
+    @DisplayName("IT: Should return 200 OK and RiderAuthDto when findAuthDataByEmail is called with an existing email")
+    void findAuthDataByEmail_withExistingEmail_shouldReturnOkAndRiderAuthDto() throws Exception {
+        String existingEmail = existingRider.getEmail();
+
+        mockMvc.perform(get("/rider/internal/by-email")
+                        .param("email", existingEmail)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingRider.getId().toString()))
+                .andExpect(jsonPath("$.email").value(existingEmail))
+                .andExpect(jsonPath("$.password").value(existingRider.getPassword()));
+    }
+
+    @Test
+    @DisplayName("IT: Should return 404 Not Found when findAuthDataByEmail is called with a non-existing email")
+    void findAuthDataByEmail_withNonExistingEmail_shouldReturnNotFound() throws Exception {
+        String nonExistingEmail = "ghost@test.com";
+
+        mockMvc.perform(get("/rider/internal/by-email")
+                        .param("email", nonExistingEmail)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
 }
