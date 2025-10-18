@@ -86,4 +86,17 @@ public class RiderController {
         return ResponseEntity.status(HttpStatus.OK).body(riderSummaryDtoList);
 
     }
+
+    @Operation(summary = "Update an specif Rider",
+            description = "Endpoint to update an specif Rider in the system")
+    @ApiResponse(responseCode = "200", description = "Success to update an specif  Rider",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = RiderSummaryDto.class)))
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<RiderSummaryDto> updated(@PathVariable UUID id, @Valid @RequestBody RiderInsertDto riderDto) {
+        RiderSummaryDto resultRiderDto = riderService.updateRider(riderDto,id);
+
+        return ResponseEntity.status(HttpStatus.OK).body(resultRiderDto);
+
+    }
 }

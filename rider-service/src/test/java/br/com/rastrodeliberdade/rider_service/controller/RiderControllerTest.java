@@ -343,5 +343,119 @@ public class RiderControllerTest {
         verify(riderService, times(1)).findByState(stateToFind);
     }
 
+    @Test
+    @DisplayName("Should return 200 OK and updated Rider when call update and everything is ok")
+    void update_Return200OkAndUpdatedRider_WhenEverythingIsOk() throws Exception {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Marlon Britto Updated",
+                "marlonb.updated@test.com",
+                "marlon.britto.updated",
+                "newpassword123",
+                "Curitiba",
+                "Paraná"
+        );
+
+        RiderSummaryDto expectedRiderSummary = new RiderSummaryDto(
+                idToUpdate,
+                riderUpdateDto.bikerNickname(),
+                riderUpdateDto.email(),
+                riderUpdateDto.city(),
+                riderUpdateDto.state()
+        );
+
+        given(riderService.updateRider(any(RiderInsertDto.class), eq(idToUpdate))).willReturn(expectedRiderSummary);
+
+        mockMvc.perform(put("/rider/{id}", idToUpdate)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(idToUpdate.toString()))
+                .andExpect(jsonPath("$.bikerNickname").value(riderUpdateDto.bikerNickname()))
+                .andExpect(jsonPath("$.email").value(riderUpdateDto.email()))
+                .andExpect(jsonPath("$.city").value(riderUpdateDto.city()))
+                .andExpect(jsonPath("$.state").value(riderUpdateDto.state()));
+
+        verify(riderService, times(1)).updateRider(any(RiderInsertDto.class), eq(idToUpdate));
+    }
+
+    @Test
+    @DisplayName("Should return 404 Not Found when call update with a non-existing id")
+    void update_Return404NotFound_WhenIdNonExisting() throws Exception {
+        UUID nonExistingId = UUID.randomUUID();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Any",
+                "any@test.com",
+                "any",
+                "pass123456",
+                "city",
+                "state");
+
+        String expectedMessage = "Rider com ID " + nonExistingId + " não encontrado.";
+        given(riderService.updateRider(any(RiderInsertDto.class), eq(nonExistingId)))
+                .willThrow(new ResourceNotFoundException("Rider", nonExistingId));
+
+        mockMvc.perform(put("/rider/{id}", nonExistingId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when call update with email that belongs to another rider")
+    void update_Return400BadRequest_WhenEmailBelongsToAnotherRider() throws Exception {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Any",
+                "another.user@test.com",
+                "any",
+                "pass123456",
+                "city",
+                "state");
+
+        String errorMessage = "Já existe um usuario diferente cadastrado com o e-mail: " + riderUpdateDto.email();
+        given(riderService.updateRider(any(RiderInsertDto.class), eq(idToUpdate)))
+                .willThrow(new BusinessException(errorMessage));
+
+        mockMvc.perform(put("/rider/{id}", idToUpdate)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Erro na regra de negócio"))
+                .andExpect(jsonPath("$.message").value(errorMessage));
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when call update with nickname that belongs to another rider")
+    void update_Return400BadRequest_WhenNicknameBelongsToAnotherRider() throws Exception {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Any Name",
+                "any@test.com",
+                "another.user.nick",
+                "pass123456",
+                "city",
+                "state");
+
+        String errorMessage = "Já existe um usuario diferente cadastrado com o nickname: " + riderUpdateDto.bikerNickname();
+        given(riderService.updateRider(any(RiderInsertDto.class), eq(idToUpdate)))
+                .willThrow(new BusinessException(errorMessage));
+
+        mockMvc.perform(put("/rider/{id}", idToUpdate)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Erro na regra de negócio"))
+                .andExpect(jsonPath("$.message").value(errorMessage));
+    }
+
 
 }

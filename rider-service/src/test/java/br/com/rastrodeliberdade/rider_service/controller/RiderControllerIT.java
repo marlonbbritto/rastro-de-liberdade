@@ -24,8 +24,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -253,6 +252,113 @@ public class RiderControllerIT {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(0));
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK and updated Rider when call update and everything is ok")
+    void update_Return200OkAndUpdatedRider_WhenEverythingIsOk() throws Exception {
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Carlos Antonio Updated",
+                "carlos.updated@test.com",
+                "carlos.antonio.updated",
+                "newValidPassword123",
+                "Rio de Janeiro",
+                "RJ"
+        );
+
+        mockMvc.perform(put("/rider/{id}", idToUpdate)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(idToUpdate.toString()))
+                .andExpect(jsonPath("$.bikerNickname").value(riderUpdateDto.bikerNickname()))
+                .andExpect(jsonPath("$.email").value(riderUpdateDto.email()))
+                .andExpect(jsonPath("$.city").value(riderUpdateDto.city()));
+    }
+
+    @Test
+    @DisplayName("Should return 404 Not Found when call update with a non-existing id")
+    void update_Return404NotFound_WhenIdNonExisting() throws Exception {
+        UUID nonExistingId = UUID.randomUUID();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Any Name",
+                "any@email.com",
+                "any.nick",
+                "validPassword123",
+                "Any City",
+                "Any State"
+        );
+
+        mockMvc.perform(put("/rider/{id}", nonExistingId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value("Rider com ID " + nonExistingId + " não encontrado."));
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when call update with email that belongs to another rider")
+    void update_Return400BadRequest_WhenEmailBelongsToAnotherRider() throws Exception {
+        Rider anotherRider = riderRepository.save(Rider.builder()
+                .fullName("João Silva")
+                .email("joao.silva@test.com")
+                .bikerNickname("joao.silva")
+                .password("testpass")
+                .city("City")
+                .state("State")
+                .build());
+
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Carlos Antonio",
+                "joao.silva@test.com",
+                "carlos.antonio.updated",
+                "validPassword123",
+                "São Paulo",
+                "São Paulo"
+        );
+
+        mockMvc.perform(put("/rider/{id}", idToUpdate)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Já existe um usuario diferente cadastrado com o e-mail: " + riderUpdateDto.email()));
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when call update with nickname that belongs to another rider")
+    void update_Return400BadRequest_WhenNicknameBelongsToAnotherRider() throws Exception {
+        Rider anotherRider = riderRepository.save(Rider.builder()
+                .fullName("João Silva")
+                .email("joao.silva@test.com")
+                .bikerNickname("joao.silva")
+                .password("testpass")
+                .city("City")
+                .state("State")
+                .build());
+
+        UUID idToUpdate = existingRider.getId();
+        RiderInsertDto riderUpdateDto = new RiderInsertDto(
+                "Carlos Antonio",
+                "carlos.updated@test.com",
+                "joao.silva",
+                "validPassword123",
+                "São Paulo",
+                "São Paulo"
+        );
+
+        mockMvc.perform(put("/rider/{id}", idToUpdate)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(riderUpdateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Já existe um usuario diferente cadastrado com o nickname: " + riderUpdateDto.bikerNickname()));
     }
 
 }

@@ -10,8 +10,10 @@ import br.com.rastrodeliberdade.rider_service.repository.RiderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -71,6 +73,41 @@ public class RiderService {
         return riders.stream()
                 .map(riderMapper::toSummaryDto)
                 .toList();
+    }
+
+    @Transactional
+    public RiderSummaryDto updateRider(RiderInsertDto riderInsertDto, UUID idToUpdate){
+        Rider riderToUpdate = riderRepository.findById(idToUpdate)
+                .orElseThrow(()->new ResourceNotFoundException("Rider",idToUpdate));
+
+        validateIfEmailAlreadyRegisteredAnotherRider(riderInsertDto.email(), riderToUpdate);
+        validateIfBikerNickNameAlreadyRegisteredAnotherRider(riderInsertDto.bikerNickname(), riderToUpdate);
+
+        riderMapper.updateRiderFromDto(riderInsertDto, riderToUpdate);
+
+        if (riderInsertDto.password() != null && !riderInsertDto.password().isBlank()) {
+            riderToUpdate.setPassword(passwordEncoder.encode(riderInsertDto.password()));
+        }
+
+        Rider updatedRider = riderRepository.save(riderToUpdate);
+
+        return riderMapper.toSummaryDto(updatedRider);
+
+    }
+
+    private void validateIfEmailAlreadyRegisteredAnotherRider(String email, Rider rider){
+        Optional<Rider> existingRider = riderRepository.findByEmail(email);
+        if(existingRider.isPresent() && !(existingRider.get().getId().equals(rider.getId()))){
+            throw new BusinessException("Já existe um usuario diferente cadastrado com o e-mail: "+email);
+        }
+    }
+
+    private void validateIfBikerNickNameAlreadyRegisteredAnotherRider(String bikerNickName, Rider rider){
+        Optional<Rider> existingRider = riderRepository.findByBikerNickname(bikerNickName);
+
+        if(existingRider.isPresent() && !(existingRider.get().getId().equals(rider.getId()))){
+            throw new BusinessException("Já existe um usuario diferente cadastrado com o nickname: "+bikerNickName);
+        }
     }
 
 
