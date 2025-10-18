@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.Mockito.*;
@@ -413,6 +414,33 @@ public class RiderServiceTest {
         assertThatThrownBy(() -> riderService.updateRider(riderUpdateDto, idToUpdate))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Já existe um usuario diferente cadastrado com o nickname: " + riderUpdateDto.bikerNickname());
+    }
+
+    @Test
+    @DisplayName("Should complete successfully when call delete with an existing id")
+    void delete_ShouldCompleteSuccessfully_WhenIdExists() {
+        UUID idToDelete = existingRider.getId();
+        when(riderRepository.findById(idToDelete)).thenReturn(Optional.of(existingRider));
+        doNothing().when(riderRepository).delete(existingRider);
+
+        assertDoesNotThrow(() -> riderService.delete(idToDelete));
+
+        verify(riderRepository, times(1)).findById(idToDelete);
+        verify(riderRepository, times(1)).delete(existingRider);
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when call delete with a non-existing id")
+    void delete_ThrowResourceNotFoundException_WhenIdNonExisting() {
+        UUID idToDelete = UUID.randomUUID();
+        when(riderRepository.findById(idToDelete)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> riderService.delete(idToDelete))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Rider com ID " + idToDelete + " não encontrado.");
+
+        verify(riderRepository, times(1)).findById(idToDelete);
+        verify(riderRepository, never()).delete(any(Rider.class));
     }
 
 

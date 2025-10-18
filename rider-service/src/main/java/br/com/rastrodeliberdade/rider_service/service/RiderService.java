@@ -95,6 +95,14 @@ public class RiderService {
 
     }
 
+    @Transactional
+    public void delete(UUID id){
+        Rider riderToDelete = riderRepository.findById(id)
+                .orElseThrow(()->new ResourceNotFoundException("Rider",id));
+
+        riderRepository.delete(riderToDelete);
+    }
+
     private void validateIfEmailAlreadyRegisteredAnotherRider(String email, Rider rider){
         Optional<Rider> existingRider = riderRepository.findByEmail(email);
         if(existingRider.isPresent() && !(existingRider.get().getId().equals(rider.getId()))){
