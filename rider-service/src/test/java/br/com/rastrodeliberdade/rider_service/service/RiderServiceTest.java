@@ -1,6 +1,7 @@
 package br.com.rastrodeliberdade.rider_service.service;
 
 import br.com.rastrodeliberdade.rider_service.domain.Rider;
+import br.com.rastrodeliberdade.rider_service.dto.RiderAuthDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.exception.BusinessException;
@@ -441,6 +442,37 @@ public class RiderServiceTest {
 
         verify(riderRepository, times(1)).findById(idToDelete);
         verify(riderRepository, never()).delete(any(Rider.class));
+    }
+
+    @Test
+    @DisplayName("Should return RiderAuthDto when findAuthDataByEmail is called with an existing email")
+    void findAuthDataByEmail_withExistingEmail_shouldReturnRiderAuthDto() {
+        String existingEmail = existingRider.getEmail();
+
+
+        when(riderRepository.findByEmail(existingEmail)).thenReturn(Optional.of(existingRider));
+
+
+        RiderAuthDto result = riderService.findAuthDataByEmail(existingEmail);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(existingRider.getId());
+        assertThat(result.email()).isEqualTo(existingRider.getEmail());
+        assertThat(result.password()).isEqualTo(existingRider.getPassword());
+
+        verify(riderRepository, times(1)).findByEmail(existingEmail);
+
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when findAuthDataByEmail is called with a non-existing email")
+    void findAuthDataByEmail_withNonExistingEmail_shouldThrowResourceNotFoundException() {
+        String nonExistingEmail = "ghost@test.com";
+        when(riderRepository.findByEmail(nonExistingEmail)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> riderService.findAuthDataByEmail(nonExistingEmail))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Rider não encontrado com e-mail: '" + nonExistingEmail + "'");
     }
 
 
