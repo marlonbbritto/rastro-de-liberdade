@@ -1,6 +1,7 @@
 package br.com.rastrodeliberdade.rider_service.controller;
 
 
+import br.com.rastrodeliberdade.rider_service.dto.RiderAuthDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.service.RiderService;
@@ -110,5 +111,18 @@ public class RiderController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 
+    }
+
+    @Operation(summary = "Find Rider authentication data by email",
+            description = "INTERNAL USE ONLY - Endpoint to find Rider auth data by email for the auth-service",
+            hidden = true)
+    @ApiResponse(responseCode = "200", description = "Success to find Rider auth data",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = RiderAuthDto.class)))
+    @GetMapping(value = "/internal/by-email")
+    public ResponseEntity<RiderAuthDto> findAuthDataByEmail(@RequestParam String email){
+        RiderAuthDto resultRider = riderService.findAuthDataByEmail(email);
+
+        return ResponseEntity.status(HttpStatus.OK).body(resultRider);
     }
 }

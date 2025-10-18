@@ -1,6 +1,7 @@
 package br.com.rastrodeliberdade.rider_service.controller;
 
 import br.com.rastrodeliberdade.rider_service.domain.Rider;
+import br.com.rastrodeliberdade.rider_service.dto.RiderAuthDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.exception.BusinessException;
@@ -485,6 +486,38 @@ public class RiderControllerTest {
                 .andExpect(jsonPath("$.message").value(expectedMessage));
 
         verify(riderService, times(1)).delete(nonExistingId);
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK and RiderAuthDto when findAuthDataByEmail is called with an existing email")
+    void findAuthDataByEmail_withExistingEmail_shouldReturnOkAndRiderAuthDto() throws Exception {
+        String existingEmail = "marlonb@test.com";
+        RiderAuthDto expectedAuthDto = new RiderAuthDto(UUID.randomUUID(), existingEmail, "hashed-password");
+
+        given(riderService.findAuthDataByEmail(existingEmail)).willReturn(expectedAuthDto);
+
+        mockMvc.perform(get("/rider/internal/by-email")
+                        .param("email", existingEmail)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(existingEmail))
+                .andExpect(jsonPath("$.password").value("hashed-password"));
+    }
+
+    @Test
+    @DisplayName("Should return 404 Not Found when findAuthDataByEmail is called with a non-existing email")
+    void findAuthDataByEmail_withNonExistingEmail_shouldReturnNotFound() throws Exception {
+        String nonExistingEmail = "ghost@test.com";
+
+        given(riderService.findAuthDataByEmail(nonExistingEmail))
+                .willThrow(new ResourceNotFoundException("Rider", "e-mail", nonExistingEmail));
+
+        mockMvc.perform(get("/rider/internal/by-email")
+                        .param("email", nonExistingEmail)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 
 

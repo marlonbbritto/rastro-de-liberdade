@@ -1,6 +1,7 @@
 package br.com.rastrodeliberdade.rider_service.service;
 
 import br.com.rastrodeliberdade.rider_service.domain.Rider;
+import br.com.rastrodeliberdade.rider_service.dto.RiderAuthDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderInsertDto;
 import br.com.rastrodeliberdade.rider_service.dto.RiderSummaryDto;
 import br.com.rastrodeliberdade.rider_service.exception.BusinessException;
@@ -101,6 +102,14 @@ public class RiderService {
                 .orElseThrow(()->new ResourceNotFoundException("Rider",id));
 
         riderRepository.delete(riderToDelete);
+    }
+
+    public RiderAuthDto findAuthDataByEmail(String email){
+        Rider rider = riderRepository.findByEmail(email)
+                .orElseThrow(()-> new ResourceNotFoundException("Rider", "e-mail", email));
+
+        return riderMapper.toAuthDto(rider);
+
     }
 
     private void validateIfEmailAlreadyRegisteredAnotherRider(String email, Rider rider){
