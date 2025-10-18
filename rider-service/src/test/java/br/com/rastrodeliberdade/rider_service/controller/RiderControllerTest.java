@@ -457,5 +457,35 @@ public class RiderControllerTest {
                 .andExpect(jsonPath("$.message").value(errorMessage));
     }
 
+    @Test
+    @DisplayName("Should return 204 No Content when call delete with an existing id")
+    void delete_Return204NoContent_WhenIdExists() throws Exception {
+        UUID idToDelete = existingRider.getId();
+        doNothing().when(riderService).delete(idToDelete);
+
+        mockMvc.perform(delete("/rider/{id}", idToDelete)
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(riderService, times(1)).delete(idToDelete);
+    }
+
+    @Test
+    @DisplayName("Should return 404 Not Found when call delete with a non-existing id")
+    void delete_Return404NotFound_WhenIdNonExisting() throws Exception {
+        UUID nonExistingId = UUID.randomUUID();
+        String expectedMessage = "Rider com ID " + nonExistingId + " não encontrado.";
+        doThrow(new ResourceNotFoundException("Rider", nonExistingId)).when(riderService).delete(nonExistingId);
+
+        mockMvc.perform(delete("/rider/{id}", nonExistingId)
+                        .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"))
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        verify(riderService, times(1)).delete(nonExistingId);
+    }
+
 
 }

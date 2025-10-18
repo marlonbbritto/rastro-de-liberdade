@@ -99,4 +99,16 @@ public class RiderController {
         return ResponseEntity.status(HttpStatus.OK).body(resultRiderDto);
 
     }
+
+    @Operation(summary = "Delete an specif Rider",
+            description = "Endpoint to delete an specif Rider in the system")
+    @ApiResponse(responseCode = "204", description = "Success to delete an specif  Rider",
+            content = @Content(mediaType = "application/json"))
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        riderService.delete(id);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+
+    }
 }
