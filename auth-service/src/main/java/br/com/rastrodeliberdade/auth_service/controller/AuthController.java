@@ -4,6 +4,7 @@ import br.com.rastrodeliberdade.auth_service.dto.LoginRequestDto;
 import br.com.rastrodeliberdade.auth_service.dto.LoginResponseDto;
 import br.com.rastrodeliberdade.auth_service.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,7 +28,7 @@ public class AuthController {
     @Operation(summary = "Authenticate a user",
             description = "Endpoint to authenticate a user with email and password, returning a JWT if successful.")
     @PostMapping
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(
                 loginRequestDto.email(),
                 loginRequestDto.password());
