@@ -37,6 +37,7 @@ public class AuthController {
 
         String token = tokenService.generateToken(auth);
 
+
         return ResponseEntity.ok(new LoginResponseDto(token));
     }
 }
